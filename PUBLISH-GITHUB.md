@@ -141,7 +141,13 @@ validate.mjs 硬性要求：候选文件的 publisher 必须是已注册的发�
 
 ### 3.4 PR 描述里写清（审核材料）
 
+> 中英都可以——dbx-store 的校验脚本只检查 JSON 文件，PR 描述不校验语言，且仓库里
+> 已有中文 PR 合并的先例。下面给中英对照版，中文列事实、英文给摘要，两个语种都照顾到。
+
 ```
+Plugin: com.mawen.dbxfs v0.1.2 (DBX File System)
+Type: Native Sidecar plugin (single-file Node SEA backend, stdio-jsonl)
+
 插件：com.mawen.dbxfs v0.1.2（DBX File System）
 类型：Native Sidecar 插件（Node SEA 单文件后端，stdio-jsonl）
 能力：connection-provider（授权目录连接）+ mcp（8 个文件工具）
@@ -156,6 +162,13 @@ validate.mjs 硬性要求：候选文件的 publisher 必须是已注册的发�
 验证：68 项验收测试（tests/acceptance.cjs）源码与打包产物双模式通过；
       可复现构建（useCodeCache:false）
 许可证：MIT
+
+Summary (EN): A sidecar plugin exposing 8 file tools inside user-authorized
+directories only. No host permissions, no network access. Read-only tools are
+marked readOnlyHint; write/delete tools require host approval. Scope is enforced
+by realpath checks against configured roots with a sensitive-file denylist.
+Verification: 68 acceptance tests pass in both source and packaged modes;
+reproducible build (useCodeCache:false). License: MIT.
 ```
 
 ### 3.5 提交后会发生什么
