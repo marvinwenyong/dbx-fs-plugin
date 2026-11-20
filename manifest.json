@@ -3,7 +3,7 @@
   "manifest_version": 1,
   "id": "com.mawen.dbxfs",
   "name": "DBX File System",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "mawen",
   "description": "给 DBX 内置 AI 助手授予授权目录内的文件能力：列目录、读文件、内容搜索、精确编辑、删除。三档权限模式、敏感文件黑名单、符号链接逃逸防护与审计日志。",
   "icon": "assets/plugin.svg",

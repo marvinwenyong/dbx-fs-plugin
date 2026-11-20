@@ -2,7 +2,13 @@ schema_version = 1
 
 # 后端是 Node SEA 单文件（backend/dbxfs.cjs -> bin/windows-x64/dbxfs.exe），
 # 不依赖 Rust/Go 工具链。此处 language 仅为让官方 CLI 的构建阶段通过，
-# 真实构建步骤见 build/build.ps1；go-shim/ 是构建占位，不进入发布包。
+# 真实构建步骤见 build/build.cjs 与 build/build-shim.cjs；go-shim/ 是构建占位，
+# 不进入发布包。
+# 打包命令（CLI 只支持 Rust/Go 源码构建，需把 build/go.exe 以 go 之名放上 PATH，
+# 且其同目录要有 dbxfs.exe 供 shim 复制）：
+#   node build/build.cjs && node build/build-shim.cjs
+#   mkdir -p /tmp/goshim && cp build/go.exe /tmp/goshim/go.exe && cp bin/windows-x64/dbxfs.exe /tmp/goshim/
+#   PATH="/tmp/goshim:$PATH" dbx-plugin package --output-dir dist
 [backend]
 language = "go"
 directory = "go-shim"

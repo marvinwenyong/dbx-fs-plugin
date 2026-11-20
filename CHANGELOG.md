@@ -2,6 +2,39 @@
 
 本插件遵循语义化版本。已发布资产不可覆盖；任何字节变化必须递增版本并重新审核。
 
+## [0.1.2] - 2026-11-20
+
+修复连接授权解析失败。**0.1.1 装好后 DBX 里 `connection/test` 报「未配置 root_path」，本版本为首个授权闭环可用的候选。**
+
+### 修复
+
+- **授权配置解析不到 `external_config` 里的值**：0.1.1 只在 `root_path` / `config.root_path`
+  等平铺位置取值，而 DBX 真实载荷（读 t8y2/dbx 源码
+  `crates/dbx-plugin-runtime/src/plugins/host.rs` 的 `plugin_connection_params` 确认）是
+  `{ provider, connection:<ConnectionConfig>, runtime, operationId }`，授权配置在
+  `connection.external_config.root_path` 里，平铺查找全部落空，于是出现
+  「dbx.db 里明明填了授权目录，sidecar 却收到 `roots: []`」。
+  现改为对载荷做广度优先递归查找（越浅层越优先），兼容 `external_config` /
+  `externalConfig` / `config` / 平铺等形态。
+- **连接 id 解析被 `provider.id` 抢先**：`provider.id` 与 `connection.id` 键名相同，
+  整树 BFS 会先命中前者，导致同一插件的多个连接共用一个 session 缓存键。
+  现 id/name 优先取 `connection` 子树。
+
+### 新增
+
+- **脱敏诊断日志**：`connection/test` 解析不到授权目录时，stderr 输出脱敏后的载荷键结构
+  （`secret`/`password`/`token` 等键值替换为 `***`）。DBX 传输层键名一旦变化，
+  「配置填了却说不存在」这类故障可直接从日志定位，不必再逐轮猜键名。
+- 验收测试新增第 11 章「DBX 真实载荷形态」共 8 项断言：`external_config` 嵌套取值、
+  `mcp/call` 的 `lifecycle` 载荷、session 缓存按 `connection.id` 命中（而非 `provider.id`）、
+  诊断日志可见且已脱敏密码。测试总数 60 → 68。
+
+### 验证
+
+- 源码模式与 SEA 产物模式均 68/68 通过
+- 包内文件：`assets/plugin.svg`、`backend/dbxfs.cjs`、`bin/windows-x64/dbxfs.exe`、`checksums.json`、`manifest.json`
+- sha256 `d9c950ac2121b6f387f3dc7bbf82b7c43cd0aaa271da75f4808d3402222a4fd2`，35,207,384 字节
+
 ## [0.1.1] - 2026-11-20
 
 修复安装阻塞问题。**0.1.0 无法在 DBX 中初始化，本版本为首个可用候选。**

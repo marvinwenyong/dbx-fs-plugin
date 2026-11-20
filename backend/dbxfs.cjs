@@ -34,7 +34,7 @@ const readline = require("node:readline");
 /* ------------------------------ 常量 ------------------------------ */
 
 const PLUGIN_ID = "com.mawen.dbxfs";
-const PLUGIN_VERSION = "0.1.1";
+const PLUGIN_VERSION = "0.1.2";
 const SIDECAR_PROTOCOL_VERSION = 1;
 
 /**
@@ -111,49 +111,110 @@ function splitRoots(raw) {
   return raw.split(sep).map(s => s.trim()).filter(Boolean);
 }
 
-function firstDefined(...vals) {
-  for (const v of vals) if (v !== undefined && v !== null && v !== "") return v;
+/**
+ * 授权配置可能出现的键名。DBX 侧存储用 snake_case（external_config），
+ * 传输层可能用 camelCase，也可能平铺——穷举比猜准。
+ */
+const ROOT_KEYS = ["root_path", "rootPath", "roots", "root_paths", "rootPaths", "authorized_roots", "authorizedRoots", "allowed_roots", "allowedRoots", "directories"];
+const MODE_KEYS = ["fs_mode", "fsMode", "mode", "access_mode", "accessMode"];
+const MAX_READ_KEYS = ["max_read_bytes", "maxReadBytes", "max_read", "read_limit_bytes"];
+const MAX_WRITE_KEYS = ["max_write_bytes", "maxWriteBytes", "max_write", "write_limit_bytes"];
+const ID_KEYS = ["id", "connectionId", "connection_id"];
+const NAME_KEYS = ["name", "connection_name", "connectionName", "display_name", "displayName"];
+
+/** 递归搜索时要跳过的子树：工具参数不是连接配置 */
+const SEARCH_SKIP = new Set(["arguments", "args", "params", "tool", "method"]);
+
+/**
+ * 在对象树里广度优先查找键，越浅层越优先。
+ * 用于把 DBX 的连接配置从任意嵌套层级里挖出来（external_config /
+ * externalConfig / config / 平铺都不例外），同时避开工具参数子树，
+ * 防止调用方通过 arguments 注入伪造的授权配置。
+ */
+function deepFind(root, keys, maxDepth = 8) {
+  if (!root || typeof root !== "object") return undefined;
+  const queue = [[root, 0]];
+  while (queue.length) {
+    const [cur, depth] = queue.shift();
+    if (depth > maxDepth) continue;
+    if (Array.isArray(cur)) {
+      for (const v of cur) if (v && typeof v === "object") queue.push([v, depth + 1]);
+      continue;
+    }
+    for (const k of keys) {
+      if (Object.prototype.hasOwnProperty.call(cur, k)) {
+        const v = cur[k];
+        if (v !== undefined && v !== null && v !== "") return v;
+      }
+    }
+    for (const k of Object.keys(cur)) {
+      if (SEARCH_SKIP.has(k)) continue;
+      const v = cur[k];
+      if (v && typeof v === "object") queue.push([v, depth + 1]);
+    }
+  }
   return undefined;
 }
 
+/** 脱敏：Secret / 凭据类字段不写入审计 */
+const REDACT_KEYS = /secret|password|passwd|token|credential|api_?key|private|auth/i;
+function redact(value, depth = 0) {
+  if (depth > 6) return "[deep]";
+  if (Array.isArray(value)) return value.slice(0, 20).map(v => redact(v, depth + 1));
+  if (value && typeof value === "object") {
+    const out = {};
+    for (const [k, v] of Object.entries(value)) {
+      out[k] = REDACT_KEYS.test(k) ? "***" : redact(v, depth + 1);
+    }
+    return out;
+  }
+  if (typeof value === "string" && value.length > 400) return value.slice(0, 400) + `…(${value.length} chars)`;
+  return value;
+}
+
 /**
- * 从载荷中提取授权配置。兼容官方规范与多种宿主版本结构：
- *   connection/test|connect|disconnect : params.{provider, connection, runtime}
- *   mcp/call                            : params.{tool, arguments, lifecycle}，
- *                                         lifecycle 与 connection/connect 载荷相同
- * 连接配置可能位于 connection.config，也可能平铺在 connection 上。
+ * 从载荷中提取授权配置。
+ *
+ * DBX 侧权威载荷（读 crates/dbx-plugin-runtime/src/plugins/host.rs 的
+ * plugin_connection_params 确认）：
+ *   connection/test | connection/connect →
+ *     { provider:{id,databaseType}, connection:<ConnectionConfig>,
+ *       runtime:{host,port}, operationId }
+ *   mcp/call →
+ *     { tool, arguments, lifecycle:<上面同一份载荷> }
+ * ConnectionConfig.external_config 按 Rust 字段名原样序列化（snake_case，
+ * 无 camelCase rename），授权配置就在 connection.external_config 里。
+ *
+ * 搜索范围优先 lifecycle（mcp/call 的连接载荷），其次整个 params；
+ * 键名递归匹配，兼容 external_config / externalConfig / config / 平铺等形态。
  */
 function resolveConfig(params) {
   const p = params || {};
-  const life = p.lifecycle && typeof p.lifecycle === "object" ? p.lifecycle : {};
+  const life = p.lifecycle && typeof p.lifecycle === "object" ? p.lifecycle : null;
+  const scope = life || p;
+  const conn = scope.connection && typeof scope.connection === "object" ? scope.connection : null;
 
-  const conn = [life.connection, p.connection].find(c => c && typeof c === "object") || {};
-  const cfg = [conn.config, life.config, p.config].find(c => c && typeof c === "object") || {};
-  const flat = { ...conn, ...cfg, ...life, ...p };
-
-  const rootsRaw = firstDefined(
-    cfg.root_path, conn.root_path, p.root_path,
-    cfg.roots, conn.roots, p.roots,
-    cfg.root_paths, conn.root_paths, p.root_paths
-  );
+  const rootsRaw = deepFind(scope, ROOT_KEYS);
   const roots = splitRoots(rootsRaw).map(r => path.resolve(r));
 
-  const modeRaw = String(firstDefined(cfg.fs_mode, conn.fs_mode, p.fs_mode, cfg.mode, conn.mode, p.mode, DEFAULT_MODE)).toLowerCase();
+  const modeRaw = String(deepFind(scope, MODE_KEYS) ?? DEFAULT_MODE).toLowerCase();
   if (!VALID_MODES.includes(modeRaw)) {
     throw new FsError(`fs_mode 非法: ${modeRaw}，可选 ${VALID_MODES.join(" / ")}`);
   }
 
-  const maxRead = clampInt(
-    firstDefined(cfg.max_read_bytes, conn.max_read_bytes, p.max_read_bytes, DEFAULT_MAX_READ),
-    1024, MAX_ALLOWED_READ, DEFAULT_MAX_READ
-  );
-  const maxWrite = clampInt(
-    firstDefined(cfg.max_write_bytes, conn.max_write_bytes, p.max_write_bytes, DEFAULT_MAX_WRITE),
-    1024, MAX_ALLOWED_WRITE, DEFAULT_MAX_WRITE
-  );
+  const maxRead = clampInt(deepFind(scope, MAX_READ_KEYS) ?? DEFAULT_MAX_READ, 1024, MAX_ALLOWED_READ, DEFAULT_MAX_READ);
+  const maxWrite = clampInt(deepFind(scope, MAX_WRITE_KEYS) ?? DEFAULT_MAX_WRITE, 1024, MAX_ALLOWED_WRITE, DEFAULT_MAX_WRITE);
 
-  const connectionId = firstDefined(conn.id, life.connectionId, p.connectionId, p.connection_id, "") || "";
-  const name = firstDefined(conn.name, p.name, "") || "";
+  // id/name 必须优先取 connection 子树：provider.id 与 connection.id 键名相同，
+  // 整树 BFS 会先命中 provider.id，导致同一插件的多个连接共用一个 session key。
+  const connectionId = String(
+    (conn ? deepFind(conn, ID_KEYS) : undefined) ??
+    deepFind(scope, ["connectionId", "connection_id"]) ?? ""
+  );
+  const name = String(
+    (conn ? deepFind(conn, NAME_KEYS) : undefined) ??
+    deepFind(scope, NAME_KEYS) ?? ""
+  );
 
   return { connectionId, name, roots, mode: modeRaw, maxRead, maxWrite };
 }
@@ -502,6 +563,9 @@ function onInitialize(params) {
 function onConnectionTest(params) {
   const cfg = resolveConfig(params);
   if (cfg.roots.length === 0) {
+    // 解析不到授权目录时留下脱敏现场：DBX 传输层键名一旦变化，
+    // "配置明明填了却说不存在"这类故障没有现场就得再猜一轮
+    log(`connection/test 未解析到授权目录，脱敏载荷：${JSON.stringify(redact(params)).slice(0, 2000)}`);
     return { success: false, message: "未配置 root_path：请填写至少一个授权根目录" };
   }
   const bad = [];

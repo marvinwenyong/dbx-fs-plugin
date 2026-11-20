@@ -1,12 +1,12 @@
 {
   "plugin": "com.mawen.dbxfs",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "candidates": [
     {
       "target": "windows-x64",
-      "url": "https://github.com/<owner>/<repo>/releases/download/v0.1.1/com.mawen.dbxfs-0.1.1-windows-x64.dbxp",
-      "sha256": "9f145c446ee67a92af6fb4028ee1098e797684616c1bd619b8a72ca62fe3b31a",
-      "size": 35204782
+      "url": "https://github.com/<owner>/<repo>/releases/download/v0.1.2/com.mawen.dbxfs-0.1.2-windows-x64.dbxp",
+      "sha256": "d9c950ac2121b6f387f3dc7bbf82b7c43cd0aaa271da75f4808d3402222a4fd2",
+      "size": 35207384
     }
   ]
 }

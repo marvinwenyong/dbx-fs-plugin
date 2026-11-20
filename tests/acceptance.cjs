@@ -331,8 +331,72 @@ function w(rel, content) {
   check("5 个并发请求全部正确返回", batch.every(b => b.parsed && !b.isError), JSON.stringify(sizes));
   check("并发请求 id 未错配", batch[0].parsed.size !== batch[1].parsed.size && batch[1].parsed.size !== batch[2].parsed.size, JSON.stringify(sizes));
 
-  /* ---- 11. stdout 纪律 ---- */
-  section("11. stdout 纪律");
+  /* ---- 11. DBX 真实载荷形态 ---- */
+  // 权威形态来自 t8y2/dbx 源码 crates/dbx-plugin-runtime/src/plugins/host.rs 的
+  // plugin_connection_params：connection/test | connection/connect 收
+  //   { provider:{id,databaseType}, connection:<ConnectionConfig>, runtime:{host,port}, operationId }
+  // mcp/call 收 { tool, arguments, lifecycle:<上面同一份载荷> }。
+  // ConnectionConfig 无 camelCase rename，external_config 按 Rust 字段名原样传输。
+  section("11. DBX 真实载荷形态（external_config / id 优先级 / 脱敏）");
+  const CONN_ID = "11111111-2222-3333-4444-555555555555";
+  const realPayload = (externalOver) => ({
+    provider: { id: "com.mawen.dbxfs.connection", databaseType: "dbxfs" },
+    connection: {
+      id: CONN_ID,
+      name: "本地文件系统（授权目录）",
+      db_type: "dbxfs",
+      host: "",
+      port: 0,
+      username: "",
+      password: "super-secret-pw",
+      plugin_id: "com.mawen.dbxfs",
+      external_config: { root_path: ROOT, fs_mode: "safe_write", ...(externalOver || {}) },
+    },
+    runtime: { host: "127.0.0.1", port: 45999 },
+    operationId: "op-uuid-0001",
+  });
+
+  const rt1 = await call("connection/test", realPayload());
+  check("真实载荷 connection/test 通过", rt1.success === true, JSON.stringify(rt1));
+
+  const rt2 = await call("connection/connect", realPayload());
+  check("真实载荷 connection/connect 通过", rt2.success === true, JSON.stringify(rt2));
+
+  const realLs = await tool("list_dir", { path: SUB }, realPayload());
+  check("mcp/call 真实 lifecycle 载荷可列目录", realLs.parsed && realLs.parsed.entries.some(e => e.name === "hello.txt"), realLs.text.slice(0, 200));
+
+  const realPs = await tool("permission_status", {}, realPayload());
+  check("真实载荷解析出 safe_write 模式", realPs.parsed && realPs.parsed.mode === "safe_write" && realPs.parsed.granted === true, realPs.text.slice(0, 200));
+
+  // id 优先级回归：provider.id 与 connection.id 键名相同，整树 BFS 若先命中
+  // provider.id，同一插件的多个连接会共用一个 session key。用"载荷无
+  // external_config、只能回退 session 缓存"来断言取到的是 connection.id：
+  // 取错则缓存 miss、授权为空，list_dir 必被拒。
+  const cached = await tool("list_dir", { path: SUB }, {
+    provider: { id: "com.mawen.dbxfs.connection", databaseType: "dbxfs" },
+    connection: { id: CONN_ID, name: "本地文件系统（授权目录）" },
+    runtime: { host: "127.0.0.1", port: 45999 },
+    operationId: "op-uuid-0002",
+  });
+  check("session 缓存按 connection.id 命中（而非 provider.id）", cached.parsed && cached.parsed.count >= 3, cached.text.slice(0, 200));
+
+  // 脱敏诊断：解析不到授权目录时 stderr 要留下脱敏载荷（下次 DBX 改键名可直接定位），
+  // 且不得泄露 connection.password
+  const stderrBefore = stderrText.length;
+  const rt3 = await call("connection/test", {
+    provider: { id: "com.mawen.dbxfs.connection", databaseType: "dbxfs" },
+    connection: { id: CONN_ID, name: "x", password: "super-secret-pw", external_config: { fs_mode: "safe_write" } },
+    runtime: {},
+    operationId: "op-uuid-0003",
+  });
+  await new Promise(r => setTimeout(r, 150)); // 等 stderr 管道 flush
+  const stderrNew = stderrText.slice(stderrBefore);
+  check("解析不到授权目录时返回 success=false", rt3.success === false, JSON.stringify(rt3));
+  check("诊断日志包含脱敏载荷（external_config 可见）", stderrNew.includes("external_config"), stderrNew.slice(0, 300));
+  check("诊断日志已脱敏密码", !stderrNew.includes("super-secret-pw"), stderrNew.slice(0, 300));
+
+  /* ---- 12. stdout 纪律 ---- */
+  section("12. stdout 纪律");
   check("stdout 只包含协议消息", stdoutClean);
   check("stderr 有日志输出", stderrText.includes("[dbxfs]"));
 

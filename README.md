@@ -101,14 +101,14 @@ dbx-plugin package . --target windows-x64 --output-dir dist
 
 构建产物：
 - `bin/windows-x64/dbxfs.exe` — 约 87 MB，内含 Node 运行时
-- `dist/com.mawen.dbxfs-0.1.1-windows-x64.dbxp` — 约 35 MB 安装包
+- `dist/com.mawen.dbxfs-0.1.2-windows-x64.dbxp` — 约 35 MB 安装包
 - `dist/*.artifact.json` — target / url / sha256 / size
 
 **可复现性**：`useCodeCache` 固定为 `false`（V8 代码缓存含非确定内容，开启它会导致同一份源码每次构建出的字节不同）。相同源码 + 相同 node 版本 ⇒ `.dbxp` 字节一致。
 
 ### 验收状态
 
-`tests/acceptance.cjs` 覆盖 58 项，**源码模式与 SEA 产物模式均 58/58 通过**：
+`tests/acceptance.cjs` 覆盖 68 项，**源码模式与 SEA 产物模式均 68/68 通过**：
 
 | 维度 | 覆盖内容 |
 |---|---|
@@ -120,6 +120,7 @@ dbx-plugin package . --target windows-x64 --output-dir dist
 | 限额 | max_read/max_write 超限拒绝、list 500 截断、search 200 截断 |
 | 降级 | 无 root_path 时 granted=false 且操作被拒、未知工具 isError |
 | 并发 | 5 并发请求 id 不错配 |
+| DBX 真实载荷 | `external_config` 嵌套取值、`mcp/call` 的 `lifecycle` 载荷、session 缓存按 `connection.id` 命中、脱敏诊断日志 |
 | stdout 纪律 | stdout 只有协议消息、stderr 有日志 |
 
 ### 关于 `[backend] language = "go"`
@@ -141,7 +142,7 @@ dbx-plugin package . --target windows-x64 --output-dir dist
 **安装步骤（4 步，缺一不可）：**
 
 1. DBX → 插件中心 → 设置 → 开启 **「允许安装未签名开发包」**
-2. 插件中心 → 安装本地包 → 选择 `dist/com.mawen.dbxfs-0.1.1-windows-x64.dbxp`
+2. 插件中心 → 安装本地包 → 选择 `dist/com.mawen.dbxfs-0.1.2-windows-x64.dbxp`
 3. **新建连接**：新建连接 → 类型选 **「本地文件系统（授权目录）」** → 填 `root_path`（授权根目录）与 `fs_mode` → 点「测试」应返回"授权目录可用" → 保存并**保持该连接处于打开状态**
 4. 插件中心 → 已安装 → **内置 AI 工具** → 打开本插件的开关（仅安装不会暴露任何工具）
 
@@ -165,7 +166,7 @@ dbx-plugin package . --target windows-x64 --output-dir dist
 ## 7. 已知限制
 
 - **仅在 Windows x64 验证**。SEA 产物按平台构建，上架前需补 `darwin-x64` / `darwin-arm64` / `linux-x64` 目标
-- **0.1.0 的 initialize 缺陷已在真实安装中暴露并修复**：2026-11-20 14:36 安装 0.1.0 后 DBX 报 `invalid 'capabilities': expected an array of strings`，根因是 initialize 返回对象而非 `Vec<String>`。0.1.1 已修复并加入回归断言。**当前候选为 0.1.1，需重装**
+- **0.1.1 的授权解析缺陷已在真实安装中暴露并修复**：2026-11-20 安装 0.1.1 后 `connection/test` 报「未配置 root_path」，根因是 DBX 真实载荷（`host.rs` 的 `plugin_connection_params`）把授权配置放在 `connection.external_config` 里，而实现只做平铺查找。0.1.2 已改为递归查找并修复 `provider.id` 抢先导致的 session 键错配。**当前候选为 0.1.2，需重装**
 - `picker: { kind: "directory" }` 仅桌面端有效；Web 宿主拿不到客户端路径，需手填
 - 无 UI 工作台（纯 Sidecar 插件），所有交互通过 AI 工具完成
 
@@ -189,7 +190,7 @@ dbx-plugin-fs/
 ├── backend/dbxfs.cjs      # Sidecar 源码（DBX Sidecar Protocol v1）
 ├── bin/windows-x64/       # SEA 产物（构建生成，不提交）
 ├── build/build.cjs        # SEA 构建脚本
-├── tests/acceptance.cjs   # 58 项验收测试
+├── tests/acceptance.cjs   # 68 项验收测试
 ├── go-shim/               # CLI 构建占位，不进入发布包
 ├── dist/                  # .dbxp 与 artifact.json（构建生成）
 └── _unused/               # 归档的旧 MCP server 实现（可回退）

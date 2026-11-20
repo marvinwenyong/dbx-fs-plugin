@@ -41,9 +41,9 @@
 ## 本地候选包（已生成）
 
 ```
-dist/com.mawen.dbxfs-0.1.1-windows-x64.dbxp        35,204,782 字节
-dist/com.mawen.dbxfs-0.1.1-windows-x64.artifact.json
-sha256: 9f145c446ee67a92af6fb4028ee1098e797684616c1bd619b8a72ca62fe3b31a
+dist/com.mawen.dbxfs-0.1.2-windows-x64.dbxp        35,207,384 字节
+dist/com.mawen.dbxfs-0.1.2-windows-x64.artifact.json
+sha256: d9c950ac2121b6f387f3dc7bbf82b7c43cd0aaa271da75f4808d3402222a4fd2
 ```
 
 该包为**未签名审核候选包**，本地安装需在 DBX 插件中心开启「允许安装未签名开发包」。
@@ -52,5 +52,6 @@ sha256: 9f145c446ee67a92af6fb4028ee1098e797684616c1bd619b8a72ca62fe3b31a
 
 | 版本 | 状态 | 说明 |
 |---|---|---|
-| 0.1.0 | 已安装到本机（14:36） | `initialize` 返回的 `capabilities` 误用对象而非字符串数组，DBX 报 `invalid 'capabilities': expected an array of strings`，工具未暴露 |
-| 0.1.1 | **当前候选** | 修复上述问题，`capabilities` 改为 `["connections"]`；验收测试增至 60 项并加入回归断言 |
+| 0.1.0 | 已废弃 | `initialize` 返回的 `capabilities` 误用对象而非字符串数组，DBX 报 `invalid 'capabilities': expected an array of strings`，工具未暴露 |
+| 0.1.1 | 已安装但授权不可用 | 修复 capabilities 后工具可见，但 `connection/test` 报「未配置 root_path」——DBX 真实载荷把授权配置放在 `connection.external_config` 里，平铺查找落空 |
+| 0.1.2 | **当前候选** | 授权配置改为递归查找（优先 `connection` 子树），修复 `provider.id` 抢先导致的 session 键错配；新增脱敏诊断日志；验收测试增至 68 项 |
