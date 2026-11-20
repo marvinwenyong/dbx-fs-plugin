@@ -1,0 +1,99 @@
+{
+  "$schema": "https://raw.githubusercontent.com/t8y2/dbx/main/plugins/manifest.schema.json",
+  "manifest_version": 1,
+  "id": "com.mawen.dbxfs",
+  "name": "DBX File System",
+  "version": "0.1.0",
+  "publisher": "mawen",
+  "description": "给 DBX 内置 AI 助手授予授权目录内的文件能力：列目录、读文件、内容搜索、精确编辑、删除。三档权限模式、敏感文件黑名单、符号链接逃逸防护与审计日志。",
+  "icon": "assets/plugin.svg",
+  "engines": {
+    "dbx": ">=0.6.0",
+    "host_api": "1"
+  },
+  "permissions": [],
+  "entrypoints": {
+    "backend": {
+      "protocol_versions": [1],
+      "transport": "stdio-jsonl",
+      "executable": "bin/windows-x64/dbxfs.exe"
+    }
+  },
+  "contributions": [
+    {
+      "type": "connection-provider",
+      "id": "com.mawen.dbxfs.connection",
+      "label": "本地文件系统（授权目录）",
+      "icon": "assets/plugin.svg",
+      "database_type": "dbxfs",
+      "description": "授权一个本地目录给 AI 助手读写。AI 只能访问该目录之内的文件，越界一律拒绝。",
+      "fields": [
+        {
+          "key": "display_name",
+          "label": "连接名称",
+          "type": "text",
+          "binding": "name",
+          "required": true,
+          "placeholder": "例如：DBX 插件工作区"
+        },
+        {
+          "key": "root_path",
+          "label": "授权根目录",
+          "type": "text",
+          "binding": "config",
+          "required": true,
+          "description": "AI 只能访问这个目录之内的文件。需要多个目录时用 ; 分隔（桌面端也可用右侧按钮选择）。",
+          "placeholder": "F:\\Applications\\DBX",
+          "picker": { "kind": "directory" }
+        },
+        {
+          "key": "fs_mode",
+          "label": "权限模式",
+          "type": "select",
+          "binding": "config",
+          "default": "safe_write",
+          "description": "read_only 只能读；safe_write 可写不可删；full_access 可删除。",
+          "options": [
+            { "label": "只读（read_only）", "value": "read_only" },
+            { "label": "可写不可删（safe_write）", "value": "safe_write" },
+            { "label": "完全访问（full_access）", "value": "full_access" }
+          ]
+        },
+        {
+          "key": "max_read_bytes",
+          "label": "单次读取上限（字节）",
+          "type": "number",
+          "binding": "config",
+          "default": 512000,
+          "description": "单个文件超过该大小必须分段读取。"
+        },
+        {
+          "key": "max_write_bytes",
+          "label": "单次写入上限（字节）",
+          "type": "number",
+          "binding": "config",
+          "default": 1048576,
+          "description": "单次写入或编辑后的内容大小上限。"
+        }
+      ],
+      "capabilities": ["test", "connect", "disconnect"]
+    },
+    {
+      "type": "mcp",
+      "id": "com.mawen.dbxfs.mcp",
+      "description": "授权目录内的文件工具：列目录、读取、搜索、写入、精确编辑、删除。",
+      "ai_tools": true,
+      "external_tools": true,
+      "tools": {
+        "list_dir": { "access": "read" },
+        "stat": { "access": "read" },
+        "read_file": { "access": "read" },
+        "search": { "access": "read" },
+        "permission_status": { "access": "read" },
+        "write_file": { "access": "write" },
+        "edit_file": { "access": "write" },
+        "delete": { "access": "full" }
+      }
+    }
+  ]
+}

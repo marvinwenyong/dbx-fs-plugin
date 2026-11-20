@@ -1,0 +1,43 @@
+name: Release DBX plugin
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # 官方 CLI 只支持 Rust/Go 后端源码构建，且没有"使用预编译产物"的开关。
+      # dbxfs 的真实后端是 Node SEA 单文件，因此先用 SEA 生成一个 go.exe shim，
+      # 把预置产物落到 CLI 期望的输出路径，让官方打包流程原样跑通。
+      - name: Build go shim
+        run: node build/build-shim.cjs
+
+      - name: Build Node SEA backend
+        run: node build/build.cjs
+
+      - name: Install DBX plugin CLI
+        run: npm install --global @dbx-app/plugin-cli@0.1.10
+
+      - name: Package candidate
+        run: dbx-plugin package . --target windows-x64 --output-dir dist
+
+      - name: Acceptance test on packaged binary
+        run: node tests/acceptance.cjs --exe
+
+      - name: Publish assets to the GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.dbxp
+            dist/*.artifact.json

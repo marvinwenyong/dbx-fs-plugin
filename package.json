@@ -1,0 +1,24 @@
+{
+  "name": "dbx-plugin-fs",
+  "version": "0.1.0",
+  "description": "DBX 插件：给 DBX 内置 AI 助手授予授权目录内的文件读写能力（DBX Sidecar Protocol v1 + Node SEA 单文件后端）",
+  "type": "commonjs",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT",
+  "scripts": {
+    "build": "node build/build.cjs",
+    "test": "node tests/acceptance.cjs",
+    "test:exe": "node tests/acceptance.cjs --exe",
+    "package": "dbx-plugin package . --target windows-x64 --output-dir dist"
+  },
+  "keywords": [
+    "dbx",
+    "dbx-plugin",
+    "sidecar",
+    "filesystem",
+    "mcp-tools"
+  ]
+}

@@ -1,0 +1,12 @@
+schema_version = 1
+
+# 后端是 Node SEA 单文件（backend/dbxfs.cjs -> bin/windows-x64/dbxfs.exe），
+# 不依赖 Rust/Go 工具链。此处 language 仅为让官方 CLI 的构建阶段通过，
+# 真实构建步骤见 build/build.ps1；go-shim/ 是构建占位，不进入发布包。
+[backend]
+language = "go"
+directory = "go-shim"
+binary = "dbxfs"
+
+[package]
+include = ["manifest.json", "assets", "backend", "bin"]
