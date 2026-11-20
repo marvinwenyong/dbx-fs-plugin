@@ -1,13 +1,22 @@
 {
   "name": "dbx-plugin-fs",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "DBX 插件：给 DBX 内置 AI 助手授予授权目录内的文件读写能力（DBX Sidecar Protocol v1 + Node SEA 单文件后端）",
   "type": "commonjs",
   "private": true,
+  "license": "MIT",
+  "author": "mawen",
+  "homepage": "https://gitee.com/workbuddy-projects/dbx-plugin-fs",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/workbuddy-projects/dbx-plugin-fs.git"
+  },
+  "bugs": {
+    "url": "https://gitee.com/workbuddy-projects/dbx-plugin-fs/issues"
+  },
   "engines": {
     "node": ">=20"
   },
-  "license": "MIT",
   "scripts": {
     "build": "node build/build.cjs",
     "test": "node tests/acceptance.cjs",

@@ -5,13 +5,30 @@
   "name": "DBX File System",
   "version": "0.1.2",
   "publisher": "mawen",
-  "description": "给 DBX 内置 AI 助手授予授权目录内的文件能力：列目录、读文件、内容搜索、精确编辑、删除。三档权限模式、敏感文件黑名单、符号链接逃逸防护与审计日志。",
+  "description": "Gives the DBX built-in AI assistant file capabilities inside an authorized directory: list directories, read files, search content, precise edits, delete. Three permission tiers, sensitive-file denylist, symlink escape protection, and an audit log.",
+  "source": "https://gitee.com/workbuddy-projects/dbx-plugin-fs",
+  "homepage": "https://gitee.com/workbuddy-projects/dbx-plugin-fs",
   "icon": "assets/plugin.svg",
   "engines": {
     "dbx": ">=0.6.0",
     "host_api": "1"
   },
   "permissions": [],
+  "localizations": {
+    "zh-CN": {
+      "name": "DBX 文件系统",
+      "description": "给 DBX 内置 AI 助手授予授权目录内的文件能力：列目录、读文件、内容搜索、精确编辑、删除。三档权限模式、敏感文件黑名单、符号链接逃逸防护与审计日志。",
+      "contributions": {
+        "com.mawen.dbxfs.connection": {
+          "label": "本地文件系统（授权目录）",
+          "description": "授权一个本地目录给 AI 助手读写。AI 只能访问该目录之内的文件，越界一律拒绝。"
+        },
+        "com.mawen.dbxfs.mcp": {
+          "description": "授权目录内的文件工具：列目录、读取、搜索、写入、精确编辑、删除。"
+        }
+      }
+    }
+  },
   "entrypoints": {
     "backend": {
       "protocol_versions": [
@@ -45,7 +62,7 @@
           "binding": "config",
           "required": true,
           "description": "AI 只能访问这个目录之内的文件。需要多个目录时用 ; 分隔（桌面端也可用右侧按钮选择）。",
-          "placeholder": "F:\\Applications\\DBX",
+          "placeholder": "D:\\workspace",
           "picker": {
             "kind": "directory"
           }

@@ -7,7 +7,7 @@
  *   要求自包含可执行文件；dbxfs 是零依赖 Node 脚本，因此用 Node SEA 打包。
  *
  * 用法：node build/build.cjs [node.exe 路径]
- * 默认使用 D:\Applications\nodejs\node.exe，可用参数或 NODE_EXE 环境变量覆盖。
+ * 默认使用当前运行的 node 作为 SEA 基础镜像，可用参数或 NODE_EXE 环境变量覆盖。
  */
 "use strict";
 

@@ -4,9 +4,9 @@
   "candidates": [
     {
       "target": "windows-x64",
-      "url": "https://github.com/<owner>/<repo>/releases/download/v0.1.2/com.mawen.dbxfs-0.1.2-windows-x64.dbxp",
-      "sha256": "d9c950ac2121b6f387f3dc7bbf82b7c43cd0aaa271da75f4808d3402222a4fd2",
-      "size": 35207384
+      "url": "https://gitee.com/workbuddy-projects/dbx-plugin-fs/releases/download/v0.1.2/com.mawen.dbxfs-0.1.2-windows-x64.dbxp",
+      "sha256": "f4464875b97f72ffc9a0051a8e0041e20b429e888772cae231387bc0f567564f",
+      "size": 35207625
     }
   ]
 }

@@ -3,6 +3,9 @@
 > 让 DBX 内置 AI 助手在**你明确授权的目录内**读写文件。
 > 实现 DBX Sidecar Protocol v1，后端为 Node SEA 单文件可执行程序（零第三方依赖、无需外部 Node 运行时）。
 
+**源码仓库**：<https://gitee.com/workbuddy-projects/dbx-plugin-fs>（GitHub 镜像筹备中）
+**官方商店**：候选审核中（提交流程见 `PUBLISH-GITHUB.md` / `STORE_SUBMISSION.md`）
+
 ---
 
 ## 1. 它解决什么问题
@@ -172,13 +175,13 @@ dbx-plugin package . --target windows-x64 --output-dir dist
 
 ## 8. 历史方案说明（已废弃）
 
-本插件早期以标准 MCP server 形式实现，通过 `F:\Applications\DBX\.mcp.json` 挂载。**该方案已废弃**，原因：
+本插件早期以标准 MCP server 形式实现，通过 DBX 安装目录下的 `.mcp.json` 挂载。**该方案已废弃**，原因：
 
 DBX 0.6.72 的内置 agent **不读取用户编写的 `.mcp.json`**——二进制中的 `.mcp.json` 字样只出现在"把 DBX 自己的 MCP bridge 导出给 Claude Code / Cursor / Codex 等外部 CLI"的帮助文本里；`settings_json` 无任何 MCP 配置键，`dbx.db` 无 MCP server 配置表，也没有"添加自定义 MCP server"的 UI 入口。DBX 的 MCP 工具面来自 **native DBX 工具 + 插件通过 `mcp/tools` / `mcp/call` 贡献的工具**。
 
 因此正确路径是把后端改造成 DBX 原生插件的 Sidecar，也就是当前实现。旧实现归档在 `_unused/`（`server.mjs` + `selftest.mjs`），仅作回溯参考，不参与构建。
 
-> `F:\Applications\DBX\.mcp.json` 中的 `dbxfs` 条目对该方案无效，未作改动；如确认不再需要可自行删除（保留其中的 `dbx` 官方条目）。
+> DBX 安装目录下 `.mcp.json` 中的 `dbxfs` 条目对该方案无效，未作改动；如确认不再需要可自行删除（保留其中的 `dbx` 官方条目）。
 
 ## 9. 目录结构
 

@@ -112,9 +112,9 @@ function w(rel, content) {
   fs.writeFileSync(SECRET, "PRIVATE-KEY-CONTENT", "utf8");
   fs.writeFileSync(path.join(ROOT, "dbx.db"), "fake-db", "utf8");
   fs.writeFileSync(path.join(ROOT, "note.md"), "# note\n", "utf8");
-  // 符号链接指向授权目录外
+  // 符号链接指向授权目录外（Windows 用 junction，POSIX 用 dir）
   const link = path.join(SUB, "escape");
-  try { fs.symlinkSync(OUTSIDE, link, "junction"); } catch {}
+  try { fs.symlinkSync(OUTSIDE, link, process.platform === "win32" ? "junction" : "dir"); } catch {}
   fs.writeFileSync(path.join(OUTSIDE, "outside.txt"), "OUTSIDE-SECRET", "utf8");
 
   /* ---- 1. 协议一致性 ---- */

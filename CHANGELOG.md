@@ -33,7 +33,19 @@
 
 - 源码模式与 SEA 产物模式均 68/68 通过
 - 包内文件：`assets/plugin.svg`、`backend/dbxfs.cjs`、`bin/windows-x64/dbxfs.exe`、`checksums.json`、`manifest.json`
-- sha256 `d9c950ac2121b6f387f3dc7bbf82b7c43cd0aaa271da75f4808d3402222a4fd2`，35,207,384 字节
+- sha256 `f4464875b97f72ffc9a0051a8e0041e20b429e888772cae231387bc0f567564f`，35,207,625 字节
+
+### 发布准备（公开提交）
+
+- 清理敏感信息：测试连接 ID 改为明显虚构值、构建脚本注释移除本地路径、manifest 占位路径中性化；git 历史 4 笔提交已全量扫描，无个人路径 / 邮箱 / 真实连接 ID
+- `manifest.json` 补 `source` / `homepage`，描述改为英文基础 + `zh-CN` localizations（商店双语惯例），已过官方 schema 校验
+- 新增 `.dbx-store.json`（商店展示元数据：tags / permissions / license / releaseNotes）
+- Release workflow 补 `release-candidates.json` 生成与上传（商店同步器的读取源，此前缺失）；新增 `build/make-release-candidates.cjs`，与 `artifact.json` 交叉核对 sha256/size
+- 验收测试 symlink 用例支持 POSIX（`junction` → 平台分支），为多平台 runner 铺路
+- 新增 `PUBLISH-GITHUB.md`：Gitee → GitHub mirror → Release → dbx-store 候选 PR 的完整操作手册
+
+> 0.1.2 在公开发布前重新打包（manifest 元数据变更导致包内字节变化），
+> 此前未产生任何公开 Release，不涉及覆盖已发布资产。
 
 ## [0.1.1] - 2026-11-20
 

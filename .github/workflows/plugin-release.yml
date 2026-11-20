@@ -35,9 +35,28 @@ jobs:
       - name: Acceptance test on packaged binary
         run: node tests/acceptance.cjs --exe
 
+      # DBX Store 同步器从 Release 里的 release-candidates.json 读取候选信息，
+      # 缺这个文件商店无法自动创建候选 PR。url 用本仓库 + 本次 tag 拼真实下载地址。
+      - name: Generate release-candidates.json
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: node build/make-release-candidates.cjs dist
+
       - name: Publish assets to the GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             dist/*.dbxp
             dist/*.artifact.json
+            dist/release-candidates.json
+
+# 多平台扩展（当前仅发布已验证的 windows-x64；补平台前需在对应 runner 上验证）：
+#   1. 把 release job 改为 matrix.strategy.matrix.include:
+#        [{ target: windows-x64, runs-on: windows-latest },
+#         { target: darwin-x64,  runs-on: macos-13 },
+#         { target: darwin-arm64, runs-on: macos-14 },
+#         { target: linux-x64,   runs-on: ubuntu-latest }]
+#   2. dbx-plugin package . --target ${{ matrix.target }} --output-dir dist
+#   3. 用 actions/upload-artifact 汇总各平台产物，再由一个 publish job 下载、
+#      生成 release-candidates.json 并上传（URL 仍按本仓库 + tag 拼接）。

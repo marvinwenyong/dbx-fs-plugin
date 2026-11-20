@@ -1,33 +1,47 @@
 # 提交 DBX 官方商店的步骤
 
-本文件记录把 `com.mawen.dbxfs` 上架到 DBX 官方商店需要做的事。**当前状态：候选包已就绪，尚未提交。**
+本文件记录把 `com.mawen.dbxfs` 上架到 DBX 官方商店需要做的事。
+**当前状态：候选包 0.1.2 已就绪；源码已推 Gitee（`workbuddy-projects/dbx-plugin-fs`）；
+待办是 mirror 到 GitHub 并发 Release——逐步命令见 `PUBLISH-GITHUB.md`。**
 
 > 上架 PR 提交到 [`t8y2/dbx-store`](https://github.com/t8y2/dbx-store)，**不是** `t8y2/dbx`。
 > 后者只接受插件 Host、Manifest/Marketplace Schema、SDK、CLI、Packager、文档与官方示例的修改。
 
-## 前置条件（尚未满足）
+## 商店同步机制（读 dbx-store 源码确认）
+
+- 商店定时 Workflow 读 `automation/plugin-sources.json` 中 `autoUpdate: true` 的仓库，
+  发现最新公开 Release，读取其中的 `release-candidates.json`，自动创建/更新
+  `candidates/<plugin-id>.json`。
+- **因此插件源码仓必须在 GitHub**（同步用 GitHub App），且 Release 必须公开、
+  必须包含 `.dbxp` + `.artifact.json` + `release-candidates.json` 三样。
+- 本仓库 `.github/workflows/plugin-release.yml` 已在后两步自动完成：
+  构建 → 验收 → 生成 `release-candidates.json` → 上传 Release。
+- 首次上架需在 `automation/plugin-sources.json` 增加本仓库条目（`autoUpdate: true`），
+  由维护者合并；之后版本更新全自动。
+
+## 前置条件
 
 | 项 | 状态 |
 |---|---|
-| 公开源码仓库 | ❌ 需要先建（GitHub 或自定义仓库） |
-| `manifest.json` 的 `source` / `homepage` | ❌ 当前省略，建仓后补 HTTPS 地址 |
-| `release-candidates.json` 的 `url` | ❌ 当前是 `<owner>/<repo>` 占位 |
-| darwin / linux 目标产物 | ❌ 当前只有 windows-x64 |
-| 真实 DBX 安装验证 | ❌ 需人工按 README §6.1 执行 |
+| 公开源码仓库 | ✅ Gitee 已推（`workbuddy-projects/dbx-plugin-fs`）；⬜ GitHub 待 mirror |
+| `manifest.json` 的 `source` / `homepage` | ✅ 已补（Gitee 地址，mirror 时需改成 GitHub 地址） |
+| `.dbx-store.json` | ✅ 已建（name/description/tags/permissions/license/releaseNotes） |
+| `release-candidates.json` 的 `url` | ✅ 已指向 Gitee；Release 时由 workflow 按 GitHub 仓库 + tag 重新生成 |
+| darwin / linux 目标产物 | ⬜ 仅 windows-x64（已验证）；workflow 内留了 matrix 扩展注释 |
+| 真实 DBX 安装验证 | ⬜ 需人工按 README §6.1 执行（0.1.2 重装后跑 permission_status 闭环） |
 
 ## 步骤
 
-1. **建源码仓库并推送**（含 `.github/workflows/plugin-release.yml`）
-2. **补齐 `manifest.json`**：`source`、`homepage` 指向该仓库
-3. **补齐其他平台**：在 `build/build.cjs` 已支持的前提下，为 darwin-x64 / darwin-arm64 / linux-x64 各构建一次，`manifest.entrypoints.backend.executable` 需按目标平台指向对应可执行文件（当前只有 `bin/windows-x64/dbxfs.exe`）
-4. **打 GitHub Release**（tag `v0.1.0`），workflow 自动构建候选包并上传到 Release
-5. **更新 `release-candidates.json`**：把真实 Release 下载地址和各目标 sha256 / size 填进去
-6. **提交候选 PR 到 `dbx-store:main`**
-   - 若仓库在 dbx-store 注册了 `autoUpdate: true`，Store 会自动创建/更新候选 PR
-   - 否则手动开一个候选 PR，附上 Release 与 `release-candidates.json` 地址
+1. **mirror 到 GitHub 并推送**（详见 `PUBLISH-GITHUB.md`）：建公开仓 → 把源码与历史推上去 → 同步切换所有 URL（manifest / .dbx-store.json / package.json / release-candidates.json）
+2. **打 GitHub Release**（tag `v0.1.2`）：workflow 自动构建候选包、跑验收、生成并上传 `release-candidates.json`
+3. **提交候选 PR 到 `dbx-store:main`**
+   - 方式一（自动）：在 `automation/plugin-sources.json` 增加本仓库条目并开 PR，商店同步器随后自动创建候选 PR
+   - 方式二（手动）：fork dbx-store，按 `.github/PULL_REQUEST_TEMPLATE/plugin-catalog.md` 建 `candidates/com.mawen.dbxfs.json`
    - **不需要**额外提交 Issue
-7. **等待 DBX Store 审核并签名**
+4. **等待 DBX Store 审核并签名**
    - 由 Store 用官方仓库密钥统一 Ed25519 签名
+   - 审核通过前**不要**自行填写 `signingKeyId` 或 `verified: true`
+   - 审核前候选 PR 里不能出现 `.dbxp` 二进制、私钥或 Token
    - 开发者**不运行 keygen、不自行填写 `signingKeyId`**（它属于商店 artifact metadata，不是 Manifest 字段）
 8. **合并候选 PR**，安装包进入官方目录
 
@@ -41,12 +55,13 @@
 ## 本地候选包（已生成）
 
 ```
-dist/com.mawen.dbxfs-0.1.2-windows-x64.dbxp        35,207,384 字节
+dist/com.mawen.dbxfs-0.1.2-windows-x64.dbxp        35,207,625 字节
 dist/com.mawen.dbxfs-0.1.2-windows-x64.artifact.json
-sha256: d9c950ac2121b6f387f3dc7bbf82b7c43cd0aaa271da75f4808d3402222a4fd2
+sha256: f4464875b97f72ffc9a0051a8e0041e20b429e888772cae231387bc0f567564f
 ```
 
 该包为**未签名审核候选包**，本地安装需在 DBX 插件中心开启「允许安装未签名开发包」。
+`.dbxp` 二进制**不进入 git 历史**（`.gitignore` 排除 `dist/`），只作为 Release 资产发布。
 
 ### 版本记录
 
