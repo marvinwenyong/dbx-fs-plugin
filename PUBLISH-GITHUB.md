@@ -11,16 +11,18 @@
   git 全部提交经 `git grep` 逐模式扫描，无个人路径 / 邮箱 / 真实连接 ID / 库表业务信息
 - `manifest.json`：补 `source` / `homepage`，英文基础描述 + `zh-CN` localizations（已过官方 schema 校验）
 - `.dbx-store.json`：已建（商店展示元数据）
-- `.github/workflows/plugin-release.yml`：构建 → 验收 → **生成 `release-candidates.json`** → 上传 Release
+- `.github/workflows/plugin-release.yml`：构建 → 验收 → **生成 `release-candidates.json`** → 上传 Release；
+  CI 打包步骤已修（go shim 前置 PATH）
 - `build/make-release-candidates.cjs`：候选清单生成器，与 `artifact.json` 交叉核对 sha256/size
 - 源码内所有 URL 已切换到 GitHub 主仓 `marvinwenyong/dbx-fs-plugin`
+- **源码与 tag 已推送 GitHub**：`main` 与 `v0.1.2` 均指向 `32f0079`
 
 **待执行**（见下方各节）
 
-1. 推送源码与 tag 到 GitHub
-2. 打 v0.1.2 Release（workflow 自动构建并上传 3 个资产）
-3. 向 dbx-store 提交候选 PR
-4. 等待审核签名合并
+1. 在 GitHub 网页创建 v0.1.2 Release（§2）——workflow 自动构建并上传 3 个资产
+2. fork dbx-store，提交首次上架 3 文件（§3）：`publishers/mawen.json` +
+   `candidates/com.mawen.dbxfs.json` + `automation/plugin-sources.json` 条目
+3. 等待维护者审核、签名、合并（§3.5）
 
 ## 1. 推送到 GitHub
 
@@ -57,27 +59,29 @@ tag 推送后在 GitHub 网页 **Releases → Draft a new release**：
 若 workflow 失败，先看 Actions 日志；最常见是验收测试或打包步骤，本地可复现：
 `node tests/acceptance.cjs --exe`。
 
-## 3. 提交 dbx-store 候选 PR
+## 3. 提交 dbx-store 候选 PR（首次上架）
 
-### 方式一（推荐，全自动）：注册仓库让同步器建 PR
+> 流程以官方文档《开发和提交 DBX 插件 → 提交官方商店的完整流程》与 dbx-store
+> `scripts/validate.mjs` 校验规则为准（已逐条核对）。
 
-fork [`t8y2/dbx-store`](https://github.com/t8y2/dbx-store) → 编辑
-`automation/plugin-sources.json`，在 `plugins` 数组里加一条：
+**首次上架需要提交 3 个文件**（fork [`t8y2/dbx-store`](https://github.com/t8y2/dbx-store) 后在网页上逐个 "Add file → Create new file" 创建，然后开 PR 到 `t8y2/dbx-store:main`）：
+
+### 3.1 `publishers/mawen.json`（发布者记录，首次必需）
+
+validate.mjs 硬性要求：候选文件的 publisher 必须是已注册的发布者 id。
 
 ```json
 {
-  "repository": "marvinwenyong/dbx-fs-plugin",
-  "metadataPath": ".dbx-store.json",
-  "autoUpdate": true
+  "id": "mawen",
+  "name": "mawen",
+  "status": "unverified"
 }
 ```
 
-开 PR 到 `t8y2/dbx-store:main`。合并后，商店定时同步器读到 v0.1.2 Release，
-自动创建 `candidates/com.mawen.dbxfs.json` 候选 PR。**之后每次发新版本 Release 全自动。**
+### 3.2 `candidates/com.mawen.dbxfs.json`（版本候选）
 
-### 方式二（手动）：直接提交候选文件
-
-fork dbx-store → 新建 `candidates/com.mawen.dbxfs.json`，内容如下（已填好真实地址与哈希）：
+**文件名必须与插件 id 一致。** `sha256` 与 `size` 两个值从 Release 上 workflow 实际产出的
+`release-candidates.json` 里抄（CI 用 Node 22 构建，与本地字节不同，不能用本地值）：
 
 ```json
 {
@@ -87,7 +91,7 @@ fork dbx-store → 新建 `candidates/com.mawen.dbxfs.json`，内容如下（已
   "version": "0.1.2",
   "name": "DBX File System",
   "description": "Gives the DBX built-in AI assistant file capabilities inside an authorized directory: list directories, read files, search content, precise edits, delete. Three permission tiers, sensitive-file denylist, symlink escape protection, and an audit log.",
-  "icon": "https://github.com/marvinwenyong/dbx-fs-plugin/raw/main/assets/plugin.svg",
+  "icon": "https://raw.githubusercontent.com/marvinwenyong/dbx-fs-plugin/v0.1.2/assets/plugin.svg",
   "tags": ["files", "developer-tools", "ai", "mcp", "productivity"],
   "permissions": [],
   "source": "https://github.com/marvinwenyong/dbx-fs-plugin/tree/v0.1.2",
@@ -104,25 +108,59 @@ fork dbx-store → 新建 `candidates/com.mawen.dbxfs.json`，内容如下（已
     {
       "target": "windows-x64",
       "url": "https://github.com/marvinwenyong/dbx-fs-plugin/releases/download/v0.1.2/com.mawen.dbxfs-0.1.2-windows-x64.dbxp",
-      "sha256": "__PACKAGE_SHA256__",
-      "size": __PACKAGE_SIZE__
+      "sha256": "<从 Release 的 release-candidates.json 抄 64 位十六进制>",
+      "size": <从 Release 的 release-candidates.json 抄字节数>
     }
   ]
 }
 ```
 
-> `__PACKAGE_SHA256__` / `__PACKAGE_SIZE__` 以 **Release 上 workflow 实际产出的**
-> `release-candidates.json` 为准（workflow 从源码重新构建，字节以它为准）。
-> 本地参考值见 `CHANGELOG.md` 0.1.2 条与 `STORE_SUBMISSION.md`。
+### 3.3 `automation/plugin-sources.json`（注册自动同步，一次投入长期自动）
 
-按 PR 模板填写：capabilities / permissions / data access / network access / native sidecar behavior。
-**候选 PR 保持红色（`awaiting DBX Store signing`）是设计如此**，等维护者 `/sign`。
+在 `plugins` 数组里加一条（保持 JSON 合法，注意逗号）：
 
-### 不能做
+```json
+{
+  "repository": "marvinwenyong/dbx-fs-plugin",
+  "metadataPath": ".dbx-store.json",
+  "autoUpdate": true
+}
+```
+
+注册后，**以后每次发新 Release，商店同步器自动创建/更新候选 PR**，无需再手动提交候选文件。
+
+### 3.4 PR 描述里写清（审核材料）
+
+```
+插件：com.mawen.dbxfs v0.1.2（DBX File System）
+类型：Native Sidecar 插件（Node SEA 单文件后端，stdio-jsonl）
+能力：connection-provider（授权目录连接）+ mcp（8 个文件工具）
+权限：无 host.* 权限（manifest permissions 为空）；文件访问范围完全由用户在
+      连接配置里填写的授权根目录限定，越界拒绝
+数据访问：仅访问用户显式授权的目录；realpath 校验防符号链接逃逸与 .. 穿越；
+          敏感文件（.key/.pem/.pfx/.dbx.db/.env 等）拒读写；审计写
+          DBX_PLUGIN_DATA_DIR/audit.jsonl
+网络访问：无（sidecar 不发起任何网络请求）
+原生行为：后端为当前用户权限运行的可执行文件（非 OS 沙箱）；写/删工具需宿主
+          人工确认，只读工具免确认
+验证：68 项验收测试（tests/acceptance.cjs）源码与打包产物双模式通过；
+      可复现构建（useCodeCache:false）
+许可证：MIT
+```
+
+### 3.5 提交后会发生什么
+
+1. CI 校验候选文件；**保持红色 `open candidate(s) awaiting DBX Store signing` 是设计如此**（签名前故意阻断合并）
+2. 维护者审核源码、manifest、权限、候选 SHA-256 与大小、原生行为
+3. 审核通过后维护者运行受保护的 **Sign plugin PR candidates** workflow：下载候选包 → 校验字节 → DBX Store 仓库密钥 Ed25519 签名 → 回写 `plugins/com.mawen.dbxfs.json` 与 `catalog/index.json` 到同一个 PR
+4. CI 变绿后维护者合并，插件进入官方目录
+
+### 不能做（官方明令）
 
 - 自行填写 `signingKeyId` 或 `verified: true`
-- 在 PR 里放 `.dbxp` 二进制、私钥、Token
-- URL 引用 `t8y2/dbx-store` 的 Release
+- 在 PR 里放 `.dbxp` 二进制、插件完整源码副本、私钥或 Token
+- 候选 URL 引用 `t8y2/dbx-store` 的 Release
+- 手工编辑生成物 `plugins/*.json` / `catalog/index.json`
 
 ## 4. 审核通过后
 
