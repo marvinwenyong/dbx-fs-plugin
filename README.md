@@ -189,12 +189,16 @@ DBX 0.6.72 的内置 agent **不读取用户编写的 `.mcp.json`**——二进�
 dbx-plugin-fs/
 ├── manifest.json          # 运行时契约（身份/权限/入口/贡献点）
 ├── dbx-plugin.toml        # CLI 构建配置
+├── .dbx-store.json        # 商店展示元数据（tags/permissions/license）
 ├── assets/plugin.svg
 ├── backend/dbxfs.cjs      # Sidecar 源码（DBX Sidecar Protocol v1）
 ├── bin/windows-x64/       # SEA 产物（构建生成，不提交）
 ├── build/build.cjs        # SEA 构建脚本
+├── build/build-shim.cjs   # CLI 打包用的 go shim 构建
+├── build/make-release-candidates.cjs  # Release 候选清单生成器
 ├── tests/acceptance.cjs   # 68 项验收测试
 ├── go-shim/               # CLI 构建占位，不进入发布包
 ├── dist/                  # .dbxp 与 artifact.json（构建生成）
+├── PUBLISH-GITHUB.md      # GitHub mirror → Release → 商店提交操作手册
 └── _unused/               # 归档的旧 MCP server 实现（可回退）
 ```
