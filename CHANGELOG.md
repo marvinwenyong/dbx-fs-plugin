@@ -33,7 +33,11 @@
 
 - 源码模式与 SEA 产物模式均 68/68 通过
 - 包内文件：`assets/plugin.svg`、`backend/dbxfs.cjs`、`bin/windows-x64/dbxfs.exe`、`checksums.json`、`manifest.json`
-- sha256 `f4464875b97f72ffc9a0051a8e0041e20b429e888772cae231387bc0f567564f`，35,207,625 字节
+- sha256 `ecf7a7198e40212e884ada61949147c317857f1b7a27d306169513ed59c14ebb`，35,207,609 字节
+
+> 上述 sha256 为**本地构建**（Node 24.14.0）参考值。Release 资产由 CI workflow
+> 用 Node 22 重新构建——SEA 产物内嵌整个 Node 运行时，不同 Node 版本产出的字节不同。
+> 提交商店候选时以 Release 上 `release-candidates.json` 的实际哈希为准。
 
 ### 发布准备（公开提交）
 

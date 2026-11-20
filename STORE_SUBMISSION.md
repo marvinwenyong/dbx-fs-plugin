@@ -1,8 +1,9 @@
 # 提交 DBX 官方商店的步骤
 
 本文件记录把 `com.mawen.dbxfs` 上架到 DBX 官方商店需要做的事。
-**当前状态：候选包 0.1.2 已就绪；源码已推 Gitee（`workbuddy-projects/dbx-plugin-fs`）；
-待办是 mirror 到 GitHub 并发 Release——逐步命令见 `PUBLISH-GITHUB.md`。**
+**当前状态：候选包 0.1.2 已就绪，源码 URL 已切换到 GitHub 主仓
+`marvinwenyong/dbx-fs-plugin`；待办是推送 + 打 Release + 提交候选 PR——
+逐步命令见 `PUBLISH-GITHUB.md`。**
 
 > 上架 PR 提交到 [`t8y2/dbx-store`](https://github.com/t8y2/dbx-store)，**不是** `t8y2/dbx`。
 > 后者只接受插件 Host、Manifest/Marketplace Schema、SDK、CLI、Packager、文档与官方示例的修改。
@@ -23,10 +24,10 @@
 
 | 项 | 状态 |
 |---|---|
-| 公开源码仓库 | ✅ Gitee 已推（`workbuddy-projects/dbx-plugin-fs`）；⬜ GitHub 待 mirror |
-| `manifest.json` 的 `source` / `homepage` | ✅ 已补（Gitee 地址，mirror 时需改成 GitHub 地址） |
+| 公开源码仓库 | ✅ GitHub 主仓已定（`marvinwenyong/dbx-fs-plugin`）；⬜ 待推送；Gitee 镜像可选 |
+| `manifest.json` 的 `source` / `homepage` | ✅ 已指向 GitHub 主仓 |
 | `.dbx-store.json` | ✅ 已建（name/description/tags/permissions/license/releaseNotes） |
-| `release-candidates.json` 的 `url` | ✅ 已指向 Gitee；Release 时由 workflow 按 GitHub 仓库 + tag 重新生成 |
+| `release-candidates.json` 的 `url` | ✅ 已指向 GitHub 主仓；Release 时由 workflow 按仓库 + tag 重新生成 |
 | darwin / linux 目标产物 | ⬜ 仅 windows-x64（已验证）；workflow 内留了 matrix 扩展注释 |
 | 真实 DBX 安装验证 | ⬜ 需人工按 README §6.1 执行（0.1.2 重装后跑 permission_status 闭环） |
 
@@ -55,13 +56,17 @@
 ## 本地候选包（已生成）
 
 ```
-dist/com.mawen.dbxfs-0.1.2-windows-x64.dbxp        35,207,625 字节
+dist/com.mawen.dbxfs-0.1.2-windows-x64.dbxp        35,207,609 字节
 dist/com.mawen.dbxfs-0.1.2-windows-x64.artifact.json
-sha256: f4464875b97f72ffc9a0051a8e0041e20b429e888772cae231387bc0f567564f
+sha256: ecf7a7198e40212e884ada61949147c317857f1b7a27d306169513ed59c14ebb
 ```
 
 该包为**未签名审核候选包**，本地安装需在 DBX 插件中心开启「允许安装未签名开发包」。
 `.dbxp` 二进制**不进入 git 历史**（`.gitignore` 排除 `dist/`），只作为 Release 资产发布。
+
+> 上述 sha256 为本地构建（Node 24.14.0）参考值；Release 资产由 CI workflow 用
+> Node 22 重新构建，字节不同。**商店候选哈希以 Release 上 `release-candidates.json`
+> 的实际值为准。**
 
 ### 版本记录
 

@@ -6,13 +6,13 @@
   "private": true,
   "license": "MIT",
   "author": "mawen",
-  "homepage": "https://gitee.com/workbuddy-projects/dbx-plugin-fs",
+  "homepage": "https://github.com/marvinwenyong/dbx-fs-plugin",
   "repository": {
     "type": "git",
-    "url": "https://gitee.com/workbuddy-projects/dbx-plugin-fs.git"
+    "url": "https://github.com/marvinwenyong/dbx-fs-plugin.git"
   },
   "bugs": {
-    "url": "https://gitee.com/workbuddy-projects/dbx-plugin-fs/issues"
+    "url": "https://github.com/marvinwenyong/dbx-fs-plugin/issues"
   },
   "engines": {
     "node": ">=20"

@@ -3,7 +3,7 @@
 > 让 DBX 内置 AI 助手在**你明确授权的目录内**读写文件。
 > 实现 DBX Sidecar Protocol v1，后端为 Node SEA 单文件可执行程序（零第三方依赖、无需外部 Node 运行时）。
 
-**源码仓库**：<https://gitee.com/workbuddy-projects/dbx-plugin-fs>（GitHub 镜像筹备中）
+**源码仓库**：<https://github.com/marvinwenyong/dbx-fs-plugin>
 **官方商店**：候选审核中（提交流程见 `PUBLISH-GITHUB.md` / `STORE_SUBMISSION.md`）
 
 ---
