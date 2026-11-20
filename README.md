@@ -130,11 +130,24 @@ dbx-plugin package . --target windows-x64 --output-dir dist
 
 ### 6.1 本地安装（未签名开发包）
 
+> ### ⚠️ 前置条件：不建连接，工具永远不会出现
+>
+> 这是官方规则的硬性要求，不是可选项：
+>
+> > **「只用已打开的连接。只为用户当前已打开的插件连接提供工具。」**
+>
+> 只装插件、不开"内置 AI 工具"开关、或不建连接，三者缺任意一个，AI 助手的工具列表里都不会有文件工具。DBX 也不会 spawn 本插件的 Sidecar 进程（`dbxfs.exe`）——这是判断链路是否打通的**最直接指标**：任务管理器里看不到 `dbxfs.exe`，就说明连接没建或没打开。
+
+**安装步骤（4 步，缺一不可）：**
+
 1. DBX → 插件中心 → 设置 → 开启 **「允许安装未签名开发包」**
 2. 插件中心 → 安装本地包 → 选择 `dist/com.mawen.dbxfs-0.1.0-windows-x64.dbxp`
-3. 新建连接：连接类型选 **「本地文件系统（授权目录）」**，填 `root_path` 与 `fs_mode`，点「测试」应返回"授权目录可用"
+3. **新建连接**：新建连接 → 类型选 **「本地文件系统（授权目录）」** → 填 `root_path`（授权根目录）与 `fs_mode` → 点「测试」应返回"授权目录可用" → 保存并**保持该连接处于打开状态**
 4. 插件中心 → 已安装 → **内置 AI 工具** → 打开本插件的开关（仅安装不会暴露任何工具）
-5. 在 AI 对话里问"当前授权了哪些目录"，应触发 `permission_status`
+
+**验收**：任务管理器中应出现 `dbxfs.exe` 进程；在 AI 对话里问"你现在有哪些工具"或"当前授权了哪些目录"，应能看到本插件贡献的工具并触发 `permission_status`。
+
+工具以 `dbxfs__<工具名>` 形式暴露，共 8 个：`dbxfs__list_dir`、`dbxfs__stat`、`dbxfs__read_file`、`dbxfs__search`、`dbxfs__write_file`、`dbxfs__edit_file`、`dbxfs__delete`、`dbxfs__permission_status`。
 
 > 官方规则：只有声明 `readOnlyHint` 的工具免确认直接执行；`write_file` / `edit_file` / `delete` 会暂停并展示完整参数，由你选择允许一次或拒绝，五分钟未响应视为拒绝。
 
@@ -152,7 +165,7 @@ dbx-plugin package . --target windows-x64 --output-dir dist
 ## 7. 已知限制
 
 - **仅在 Windows x64 验证**。SEA 产物按平台构建，上架前需补 `darwin-x64` / `darwin-arm64` / `linux-x64` 目标
-- **未在真实 DBX 中完成安装验证**：GUI 自动化在当前环境不可用（独立桌面需管理员授权），安装步骤见 §6.1，需人工执行
+- **安装已成功，工具链路未打通**：2026-11-20 14:36 已完成本地安装（激活记录 `packageSha256` 与构建产物一致，manifest/exe 均已就位），但因未创建 `dbxfs` 连接，DBX 未 spawn `dbxfs.exe`，AI 助手工具列表仍无文件工具。剩余验证（建连接 → 开开关 → 确认工具出现）需人工执行，见 §6.1
 - `picker: { kind: "directory" }` 仅桌面端有效；Web 宿主拿不到客户端路径，需手填
 - 无 UI 工作台（纯 Sidecar 插件），所有交互通过 AI 工具完成
 
