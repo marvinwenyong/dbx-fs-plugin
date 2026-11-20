@@ -64,7 +64,16 @@ tag 推送后在 GitHub 网页 **Releases → Draft a new release**：
 > 流程以官方文档《开发和提交 DBX 插件 → 提交官方商店的完整流程》与 dbx-store
 > `scripts/validate.mjs` 校验规则为准（已逐条核对）。
 
-**首次上架需要提交 3 个文件**（fork [`t8y2/dbx-store`](https://github.com/t8y2/dbx-store) 后在网页上逐个 "Add file → Create new file" 创建，然后开 PR 到 `t8y2/dbx-store:main`）：
+**首次上架需要提交 3 个文件**，已备好可直接复制的现成文件在
+`store-submission/` 目录（`publishers/mawen.json`、`candidates/com.mawen.dbxfs.json`、
+`plugin-sources-entry.json`）。做法：fork [`t8y2/dbx-store`](https://github.com/t8y2/dbx-store)
+后在网页上逐个 "Add file → Create new file" 创建（文件名和路径见各小节标题），
+然后开 PR 到 `t8y2/dbx-store:main`。
+
+**sha256 / size 已填 Release v0.1.2 实际值**（CI Node 22 构建）：
+`160bb601adc578dd15c4330c7a1e69538f99d7708e174b550e8e138abae3afd1` / `34412391` 字节。
+已用 dbx-store 官方 `scripts/validate.mjs` 实跑验证：112 个插件元数据全部通过，
+候选正确进入 `awaiting DBX Store signing` 状态。
 
 ### 3.1 `publishers/mawen.json`（发布者记录，首次必需）
 
@@ -80,8 +89,9 @@ validate.mjs 硬性要求：候选文件的 publisher 必须是已注册的发�
 
 ### 3.2 `candidates/com.mawen.dbxfs.json`（版本候选）
 
-**文件名必须与插件 id 一致。** `sha256` 与 `size` 两个值从 Release 上 workflow 实际产出的
-`release-candidates.json` 里抄（CI 用 Node 22 构建，与本地字节不同，不能用本地值）：
+**文件名必须与插件 id 一致。** `sha256` 与 `size` 已填 Release 上 workflow 实际产出的
+`release-candidates.json` 值（CI 用 Node 22 构建，与本地字节不同，**不能用本地值**）。
+完整文件见 `store-submission/candidates/com.mawen.dbxfs.json`，内容如下：
 
 ```json
 {
@@ -108,8 +118,8 @@ validate.mjs 硬性要求：候选文件的 publisher 必须是已注册的发�
     {
       "target": "windows-x64",
       "url": "https://github.com/marvinwenyong/dbx-fs-plugin/releases/download/v0.1.2/com.mawen.dbxfs-0.1.2-windows-x64.dbxp",
-      "sha256": "<从 Release 的 release-candidates.json 抄 64 位十六进制>",
-      "size": <从 Release 的 release-candidates.json 抄字节数>
+      "sha256": "160bb601adc578dd15c4330c7a1e69538f99d7708e174b550e8e138abae3afd1",
+      "size": 34412391
     }
   ]
 }

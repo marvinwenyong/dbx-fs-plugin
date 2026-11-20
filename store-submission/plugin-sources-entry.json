@@ -1,0 +1,5 @@
+{
+  "repository": "marvinwenyong/dbx-fs-plugin",
+  "metadataPath": ".dbx-store.json",
+  "autoUpdate": true
+}
