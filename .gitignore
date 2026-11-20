@@ -16,3 +16,6 @@ build/fakego-sea.json
 
 # SEA 构建产物（由 build/build.cjs 生成）
 bin/
+
+# CI 打包时的 go shim 目录（workflow 临时生成）
+runner-shim/

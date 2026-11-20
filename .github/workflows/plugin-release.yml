@@ -29,8 +29,17 @@ jobs:
       - name: Install DBX plugin CLI
         run: npm install --global @dbx-app/plugin-cli@0.1.10
 
+      # CLI 通过 PATH 调 go 命令。runner 镜像可能自带真 Go，但 go-shim/ 里没有
+      # Go 源码，真 go build 必然失败；因此把 SEA 生成的 go.exe shim 与真实后端
+      # 放进同一目录并前置 PATH，让假 go 截获 -o 参数、把预置产物落到目标路径。
       - name: Package candidate
-        run: dbx-plugin package . --target windows-x64 --output-dir dist
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path runner-shim | Out-Null
+          Copy-Item build/go.exe runner-shim/go.exe
+          Copy-Item bin/windows-x64/dbxfs.exe runner-shim/dbxfs.exe
+          $env:PATH = "$(Get-Location)\runner-shim;$env:PATH"
+          dbx-plugin package . --target windows-x64 --output-dir dist
 
       - name: Acceptance test on packaged binary
         run: node tests/acceptance.cjs --exe
