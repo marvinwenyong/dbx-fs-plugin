@@ -3,7 +3,7 @@
   "manifest_version": 1,
   "id": "com.mawen.dbxfs",
   "name": "DBX File System",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "mawen",
   "description": "给 DBX 内置 AI 助手授予授权目录内的文件能力：列目录、读文件、内容搜索、精确编辑、删除。三档权限模式、敏感文件黑名单、符号链接逃逸防护与审计日志。",
   "icon": "assets/plugin.svg",
@@ -14,7 +14,9 @@
   "permissions": [],
   "entrypoints": {
     "backend": {
-      "protocol_versions": [1],
+      "protocol_versions": [
+        1
+      ],
       "transport": "stdio-jsonl",
       "executable": "bin/windows-x64/dbxfs.exe"
     }
@@ -44,7 +46,9 @@
           "required": true,
           "description": "AI 只能访问这个目录之内的文件。需要多个目录时用 ; 分隔（桌面端也可用右侧按钮选择）。",
           "placeholder": "F:\\Applications\\DBX",
-          "picker": { "kind": "directory" }
+          "picker": {
+            "kind": "directory"
+          }
         },
         {
           "key": "fs_mode",
@@ -54,9 +58,18 @@
           "default": "safe_write",
           "description": "read_only 只能读；safe_write 可写不可删；full_access 可删除。",
           "options": [
-            { "label": "只读（read_only）", "value": "read_only" },
-            { "label": "可写不可删（safe_write）", "value": "safe_write" },
-            { "label": "完全访问（full_access）", "value": "full_access" }
+            {
+              "label": "只读（read_only）",
+              "value": "read_only"
+            },
+            {
+              "label": "可写不可删（safe_write）",
+              "value": "safe_write"
+            },
+            {
+              "label": "完全访问（full_access）",
+              "value": "full_access"
+            }
           ]
         },
         {
@@ -76,7 +89,11 @@
           "description": "单次写入或编辑后的内容大小上限。"
         }
       ],
-      "capabilities": ["test", "connect", "disconnect"]
+      "capabilities": [
+        "test",
+        "connect",
+        "disconnect"
+      ]
     },
     {
       "type": "mcp",
@@ -85,14 +102,30 @@
       "ai_tools": true,
       "external_tools": true,
       "tools": {
-        "list_dir": { "access": "read" },
-        "stat": { "access": "read" },
-        "read_file": { "access": "read" },
-        "search": { "access": "read" },
-        "permission_status": { "access": "read" },
-        "write_file": { "access": "write" },
-        "edit_file": { "access": "write" },
-        "delete": { "access": "full" }
+        "list_dir": {
+          "access": "read"
+        },
+        "stat": {
+          "access": "read"
+        },
+        "read_file": {
+          "access": "read"
+        },
+        "search": {
+          "access": "read"
+        },
+        "permission_status": {
+          "access": "read"
+        },
+        "write_file": {
+          "access": "write"
+        },
+        "edit_file": {
+          "access": "write"
+        },
+        "delete": {
+          "access": "full"
+        }
       }
     }
   ]

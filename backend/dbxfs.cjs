@@ -34,8 +34,18 @@ const readline = require("node:readline");
 /* ------------------------------ 常量 ------------------------------ */
 
 const PLUGIN_ID = "com.mawen.dbxfs";
-const PLUGIN_VERSION = "0.1.0";
+const PLUGIN_VERSION = "0.1.1";
 const SIDECAR_PROTOCOL_VERSION = 1;
+
+/**
+ * 后端能力声明。必须是**字符串数组**（DBX 反序列化 initialize 结果时
+ * 要求 Vec<String>，返回对象会在安装时报
+ * "initialize result has invalid 'capabilities': expected an array of strings"）。
+ * 取值参考官方 Rust SDK（PluginMetadata::with_capability）与官方模板：
+ * "connections" 表示实现了 connection/test|connect|disconnect 生命周期。
+ * DBX 是否调用 mcp/tools 由 manifest 的 mcp contribution 决定，不依赖此处声明。
+ */
+const PLUGIN_CAPABILITIES = ["connections"];
 
 const VALID_MODES = ["read_only", "safe_write", "full_access"];
 const DEFAULT_MODE = "read_only";
@@ -484,10 +494,7 @@ function onInitialize(params) {
   }
   return {
     protocolVersion: SIDECAR_PROTOCOL_VERSION,
-    capabilities: {
-      connection: true,
-      mcpTools: true,
-    },
+    capabilities: PLUGIN_CAPABILITIES,
     plugin: { id: PLUGIN_ID, version: PLUGIN_VERSION },
   };
 }

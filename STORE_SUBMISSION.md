@@ -41,9 +41,16 @@
 ## 本地候选包（已生成）
 
 ```
-dist/com.mawen.dbxfs-0.1.0-windows-x64.dbxp        35,204,209 字节
-dist/com.mawen.dbxfs-0.1.0-windows-x64.artifact.json
-sha256: d37ba982c2e0099d987c9fe8207f48a341bd06e3e2855696a26606cfac2de745
+dist/com.mawen.dbxfs-0.1.1-windows-x64.dbxp        35,204,782 字节
+dist/com.mawen.dbxfs-0.1.1-windows-x64.artifact.json
+sha256: 9f145c446ee67a92af6fb4028ee1098e797684616c1bd619b8a72ca62fe3b31a
 ```
 
 该包为**未签名审核候选包**，本地安装需在 DBX 插件中心开启「允许安装未签名开发包」。
+
+### 版本记录
+
+| 版本 | 状态 | 说明 |
+|---|---|---|
+| 0.1.0 | 已安装到本机（14:36） | `initialize` 返回的 `capabilities` 误用对象而非字符串数组，DBX 报 `invalid 'capabilities': expected an array of strings`，工具未暴露 |
+| 0.1.1 | **当前候选** | 修复上述问题，`capabilities` 改为 `["connections"]`；验收测试增至 60 项并加入回归断言 |

@@ -124,6 +124,10 @@ function w(rel, content) {
   check("initialize 返回 plugin.id", init.plugin && init.plugin.id === MANIFEST.id, JSON.stringify(init.plugin));
   check("initialize 的 id 与 manifest.json 一致", init.plugin.id === MANIFEST.id);
   check("initialize 的 version 与 manifest.json 一致", init.plugin.version === MANIFEST.version, `${init.plugin && init.plugin.version} vs ${MANIFEST.version}`);
+  // 回归防护：capabilities 必须是字符串数组（DBX 反序列化要求 Vec<String>，
+  // 返回对象会在安装时直接报 "invalid 'capabilities': expected an array of strings"）
+  check("capabilities 是字符串数组", Array.isArray(init.capabilities) && init.capabilities.every(c => typeof c === "string" && /^[a-z0-9][a-z0-9._:-]*$/.test(c)), JSON.stringify(init.capabilities));
+  check("capabilities 包含 connections", Array.isArray(init.capabilities) && init.capabilities.includes("connections"), JSON.stringify(init.capabilities));
 
   const badProto = await call("plugin/initialize", { host: { protocolVersions: [99] } });
   check("协议版本不匹配时返回 error", !!badProto.__error, JSON.stringify(badProto));
